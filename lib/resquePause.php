@@ -26,7 +26,7 @@ class ResquePause
 	if($result) {
 	    return ResquePause_Job::renameToTemp($queue);
 	}
-	return false
+	return false;
     }
 
     /**

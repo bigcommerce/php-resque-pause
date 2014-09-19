@@ -51,14 +51,38 @@ class ResquePause_Job
 	return Resque::redis()->srem(self::$defaultSet, $queue);
     }
 
-    public static function renameToTemp($queue, $queuePrefix = self::$defaultOriginalQueueNamespace)
+    /**
+     * Rename original queue to temp queue
+     *
+     * @param string $queue
+     * @param string original queue's prefix , by default if you use PHP-resque it's 'queue'
+     *
+     * @return boolean
+     */
+    public static function renameToTemp($queue, $queuePrefix = "")
     {
-	return Resque::redis()->rename($queuePrefix . $queue, self::$defaultTempNamespace . $queue);
+	if($queuePrefix == "") {
+	    $queuePrefix = self::$defaultOriginalQueueNamespace;
+	}
+	return Resque::redis()->rename($queuePrefix . $queue,
+				       Resque::redis()->getPrefix() . self::$defaultTempNamespace . $queue);
     }
 
-    public static function renameBackFromTemp($queue, $queuePrefix = self::$defaultOriginalQueueNamespace)
+    /**
+     * Rename back from temp to original
+     *
+     * @param string $queue
+     * @param string original queue's prefix , by default if you use PHP-resque it's 'queue'
+     *
+     * @return boolean
+     */
+    public static function renameBackFromTemp($queue, $queuePrefix = "")
     {
-	return Resque::redis()->rename(self::$defaultTempNamespace . $queue, $queuePrefix . $queue);
+	if($queuePrefix == "") {
+	    $queuePrefix = self::$defaultOriginalQueueNamespace;
+	}
+	return Resque::redis()->rename(self::$defaultTempNamespace . $queue,
+				       Resque::redis()->getPrefix(). $queuePrefix . $queue);
     }
 
     /**
