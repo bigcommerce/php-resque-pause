@@ -67,7 +67,7 @@ class ResquePause
 	Resque_Event::Listen('beforeEnqueue', "ResquePause::pauseCallback");
     }
 
-    /*
+    /**
      * pause callback
      */
     public static function pauseCallback($hookParams)
