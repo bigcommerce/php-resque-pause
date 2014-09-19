@@ -1,0 +1,22 @@
+{
+	"name": "wedy/php-resque-pause",
+	"type": "library",
+	"description": "php-resque-pause is a PHP port of resque-pause, which adds support for pausing / unpausing jobs to Resque.",
+	"authors": [
+		{
+			"name": "Wedy Chainy",
+			"email": "askwedi@wedipedia.org"
+		}
+	],
+	"autoload": {
+		"psr-0": {
+			"ResquePause": "lib/"
+		}
+	},
+	"repositories": [
+		{ "type": "git", "url": "https://github.com/chrisboulton/php-resque" }
+	],
+	"require": {
+		"chrisboulton/php-resque": "dev-master"
+	}
+}
