@@ -83,13 +83,13 @@ class ResquePause
 		throw new InvalidArgumentException('Supplied $args must be an array.');
 	    }
 	    
-	    $id = md5(uniqid('', true));
 	    $item = array('class' => $class,
 			  'args'  => array($args),
 			  'id'    => $id,
 			  'queue_time' => microtime(true));
-	    self::redis()->rpush('queue:' . $queue, json_encode($item));
-	    throw new Resque_Job_DontCreate;
+	    Resque::redis()->rpush('temp:' . $queue, json_encode($item));
+	    #TODO awaiting for chris-boulton https://github.com/chrisboulton/php-resque/pull/212
+	    #throw new Resque_Job_DontCreate;
 	}
     }
 }
