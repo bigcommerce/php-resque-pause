@@ -22,23 +22,76 @@ class ResquePause_Tests_ResquePauseTest extends PHPUnit_Framework_TestCase
 
 	public function testPause()
 	{
-		#TODO
+		Resque::enqueue('upgrade:test', 'test');
+		Resque::enqueue('upgrade:test', 'test');
+		$this->assertEquals(Resque::size('upgrade:test'), 2);
+		$this->assertTrue((bool)ResquePause::pause('upgrade:test'));
+		$this->assertEquals(Resque::size('upgrade:test'), 0);
+	}
+	
+	public function testPauseNonExistQueue()
+	{
+		$this->assertFalse((bool)ResquePause::pause('upgrade:test2'));
 	}
 
 	public function testUnpause()
 	{
-		#TODO
+		Resque::enqueue('upgrade:test3', 'test');
+		Resque::enqueue('upgrade:test3', 'test');
+		ResquePause::pause('upgrade:test3');
+		$this->assertTrue((bool)ResquePause::unpause('upgrade:test3'));
+		$this->assertEquals(Resque::size('upgrade:test3'), 2);
+	}
+
+	public function testUnpauseButNeverBeenPausedBefore()
+	{
+		Resque::enqueue('upgrade:test4', 'test');
+		Resque::enqueue('upgrade:test4', 'test');
+		$this->assertFalse((bool)ResquePause::unpause('upgrade:test4'));
 	}
 
 	public function testIsPaused()
 	{
-		#TODO
+		Resque::enqueue('upgrade:test5', 'test');
+		ResquePause::pause('upgrade:test5');
+		$this->assertTrue((bool)ResquePause::isPaused('upgrade:test5'));
+	}
+	
+	public function testIsPaused2()
+	{
+		Resque::enqueue('upgrade:test6', 'test');
+		$this->assertFalse((bool)ResquePause::isPaused('upgrade:test6'));
+	}
+
+	public function testIsPaused3()
+	{
+		Resque::enqueue('upgrade:test7', 'test');
+		ResquePause::pause('upgrade:test7');
+		ResquePause::unpause('upgrade:test7');
+		$this->assertFalse((bool)ResquePause::isPaused('upgrade:test7'));
 	}
 
 	public function testPauseCallback()
 	{
-		#TODO
-	}
+		# we have 2 in queue:upgrade:test8
+		Resque::enqueue('upgrade:test8', 'test');
+		Resque::enqueue('upgrade:test8', 'test');
 
+		# pause it!
+		ResquePause::pause('upgrade:test8');
+
+		# new enqueue 
+		$hookParams = array(
+			'class' => 'test',
+			'args'  => array(),
+			'id'    => 'dummyid',
+			'queue' => 'upgrade:test8');
+		
+		# thie before enqueue pauseCallback
+		ResquePause::pauseCallback($hookParams);
+
+		$this->assertEquals(Resque::redis()->llen('queue:upgrade:test8'), 0);
+		$this->assertEquals(Resque::redis()->llen('temp:upgrade:test8'), 3);
+	}
 
 }
