@@ -8,11 +8,6 @@
 			"email": "askwedi@wedipedia.org"
 		}
 	],
-	"autoload": {
-		"psr-0": {
-			"ResquePause": "lib/"
-		}
-	},
 	"repositories": [
 		{ "type": "git", "url": "https://github.com/chrisboulton/php-resque" }
 	],
