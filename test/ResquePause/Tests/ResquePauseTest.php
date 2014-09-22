@@ -80,18 +80,42 @@ class ResquePause_Tests_ResquePauseTest extends PHPUnit_Framework_TestCase
 		# pause it!
 		ResquePause::pause('upgrade:test8');
 
-		# new enqueue 
-		$hookParams = array(
-			'class' => 'test',
-			'args'  => array(),
-			'id'    => 'dummyid',
-			'queue' => 'upgrade:test8');
-		
-		# thie before enqueue pauseCallback
-		ResquePause::pauseCallback($hookParams);
-
+		try {
+		#  before enqueue pauseCallback
+		ResquePause::pauseCallback('test', array(), 'upgrade:test8', 'dummyid');
+		}
+	  catch(Resque_Job_DontCreate $e)	{}
 		$this->assertEquals(Resque::redis()->llen('queue:upgrade:test8'), 0);
 		$this->assertEquals(Resque::redis()->llen('temp:upgrade:test8'), 3);
 	}
+	public function testbeforeEnqueuePauseCallback()
+	{
+		ResquePause::beforeEnqueuePauseCallback();
 
+		#UNPAUSE
+		Resque::enqueue('upgrade:test3', 'test');
+		Resque::enqueue('upgrade:test3', 'test');
+		$this->assertEquals(Resque::redis()->llen('queue:upgrade:test3'), 2);
+
+		#PAUSE IT
+		ResquePause::pause('upgrade:test3');
+		$this->assertEquals(Resque::redis()->llen('queue:upgrade:test3'), 0);
+		$this->assertEquals(Resque::redis()->llen('temp:upgrade:test3'), 2);
+
+		#QUEUE IT while PAUSED
+		Resque::enqueue('upgrade:test3', 'test');
+		$this->assertEquals(Resque::redis()->llen('queue:upgrade:test3'), 0);
+		$this->assertEquals(Resque::redis()->llen('temp:upgrade:test3'), 3);
+
+		#UNPAUSE
+		ResquePause::unpause('upgrade:test3');
+		$this->assertEquals(Resque::redis()->llen('queue:upgrade:test3'), 3);
+		$this->assertEquals(Resque::redis()->llen('temp:upgrade:test3'), 0);
+
+		#QUEUE it again
+		Resque::enqueue('upgrade:test3', 'test');
+		$this->assertEquals(Resque::redis()->llen('queue:upgrade:test3'), 4);
+		$this->assertEquals(Resque::redis()->llen('temp:upgrade:test3'), 0);
+
+	}
 }

@@ -70,13 +70,8 @@ class ResquePause
     /**
      * pause callback
      */
-    public static function pauseCallback($hookParams)
+    public static function pauseCallback($class, $args, $queue, $id)
     {
-	$class = $hookParams['class'];
-	$args  = $hookParams['args'];
-	$queue = $hookParams['queue'];
-	$id    = $hookParams['id'];
-
 	if(self::isPaused($queue)) 
 	{
 	    if($args !== null && !is_array($args)) {
@@ -88,8 +83,7 @@ class ResquePause
 			  'id'    => $id,
 			  'queue_time' => microtime(true));
 	    Resque::redis()->rpush('temp:' . $queue, json_encode($item));
-	    #TODO awaiting for chris-boulton https://github.com/chrisboulton/php-resque/pull/212
-	    #throw new Resque_Job_DontCreate;
+	    throw new Resque_Job_DontCreate;
 	}
     }
 }
