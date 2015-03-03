@@ -26,49 +26,32 @@ $ composer install
 
 ## Usage ##
 
-php-resque has a basic event system that can be used by your application
-to customize how some of the php-resque internals behave.
+To use Resque Pause in your application you'll need to create a globally used instance, we use Pimple but you can use
+globals, a static variable, or whatever else you like. Upon instantiation `Pause` will add a Resque listener to make
+sure that any jobs pushed to a paused queue will be paused as well. On destruction `Pause` will remove said listener.
 
-php-resque-pause uses beforeEnqueue hook, which called before a job is placed on queue.
-
-### before Enqueue - Pause Callback ###
-
-add below before `Resque::enqueue` method.
 ```php
-//add this on top of your resque:enqueue
-ResquePause::beforeEnqueuePauseCallback();
-
-Resque::enqueue('My_Queue', 'My_Job');
+// Let's put it in a global since that's easy/familiar
+$GLOBALS['ResquePause'] = new \Resque\Plugins\Pause(); // Your enqueues are now being listened to
 ```
+
 ### Pause it! ###
 ```php
-ResquePause::pause('My_Queue');
+$GLOBALS['ResquePause']->pause('My_Queue');
 ```
 
-### Unpause it! ###
+### Resume it! ###
 ```php
-ResquePause::unpause('My_Queue');
+$GLOBALS['ResquePause']->resume('My_Queue');
 ```
 
 ### Is it Paused? ###
 ```php
-ResquePause::isPaused('My_Queue');
+$GLOBALS['ResquePause']->isPaused('My_Queue');
 ```
-
-## Tests ##
-we use phpunit for testing. you'll find a bunch of test in ```test```.
-
-Again if you are using composer, you can simply run ```vendor/bin/phpunit```.
-Please make sure they pass when you submit a pull request.
-
-Please include tests with your Pull Request.
 
 ## Contributing ##
 
-1. Fork this repo
-2. Create a branch ```git checkout -b my_branch```
-3. Push to your branch ```git push origin my_branch```
-4. Create a Pull Request from your branch
-5. That's it!
-
-This project will be PSR-4 compliant. So please verify that all pull-requests are such.
+This repo is fairly thoroughly tested so please add tests for any feature you add. We use PSR-4 conventions and have a
+linter in place. To run the linter simply run `composer lint` and to run the tests locally run `composer test`. To have
+your code reviewed please tag @gabelimon and @wedy.
