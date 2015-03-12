@@ -1,5 +1,5 @@
 {
-  "name": "wedy/php-resque-pause",
+  "name": "bigcommerce/php-resque-pause",
   "type": "library",
   "description": "php-resque-pause is a PHP port of resque-pause, which adds support for pausing / unpausing Resque jobs.",
   "authors": [{
