@@ -28,9 +28,9 @@ class JobPauser
     }
 
     /**
-     * Create a new pause job
+     * Mark a queue as paused
      *
-     * @param string $queue The name of the queue to place the job in.
+     * @param string $queue The name of the queue to mark as paused.
      * @return bool
      */
     public function pause($queue)
@@ -39,9 +39,9 @@ class JobPauser
     }
 
     /**
-     * Delete a pause job
+     * Remove the `paused` marker from a queue
      *
-     * @param string $queue The name of the queue to place the job in.
+     * @param string $queue The name of the queue to unmark.
      * @return bool
      */
     public function resume($queue)
@@ -98,9 +98,7 @@ class JobPauser
     }
 
     /**
-     *
-     *
-     * @param string $queue The name of the queue to place the job in.
+     * @param string $queue The name of the queue to check.
      * @return bool
      */
     public function isPaused($queue)
