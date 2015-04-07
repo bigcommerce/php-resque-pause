@@ -46,6 +46,9 @@ class JobPauser
      */
     public function resume($queue)
     {
+        if (!$this->isPaused($queue)) {
+            return true;
+        }
         return $this->redis->srem(self::$pausedSetName, $queue);
     }
 
@@ -58,6 +61,9 @@ class JobPauser
      */
     public function renameToTemp($queue, $queuePrefix = 'queue:')
     {
+        if ($this->queueIsEmpty($queuePrefix . $queue)) {
+            return true;
+        }
         return $this->redis->rename(
             $queuePrefix . $queue,
             $this->resqueRedisPrefix . self::$tempQueuePrefix . $queue
@@ -73,6 +79,9 @@ class JobPauser
      */
     public function renameBackFromTemp($queue, $queuePrefix = 'queue:')
     {
+        if ($this->queueIsEmpty(self::$tempQueuePrefix . $queue)) {
+            return true;
+        }
         return $this->redis->rename(
             self::$tempQueuePrefix . $queue,
             $this->resqueRedisPrefix . $queuePrefix . $queue
@@ -104,5 +113,16 @@ class JobPauser
     public function isPaused($queue)
     {
         return (bool)$this->redis->sismember(self::$pausedSetName, $queue);
+    }
+
+    /**
+     * Check if a queue has anything in it which is the same as an existence check
+     *
+     * @param $queue
+     * @return bool
+     */
+    public function queueIsEmpty($queue)
+    {
+        return $this->redis->llen($queue) === 0;
     }
 }

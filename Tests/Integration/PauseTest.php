@@ -65,7 +65,7 @@ class PauseTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($this->pauser->pause('upgrade:test'));
 
         // Pause non-existent queue
-        $this->assertFalse($this->pauser->pause('upgrade:test2'));
+        $this->assertTrue($this->pauser->pause('upgrade:test2'));
     }
 
     public function testResume()
@@ -79,10 +79,10 @@ class PauseTest extends PHPUnit_Framework_TestCase
 
         // Resume non-paused queue
         Resque::enqueue('upgrade:test4', 'test');
-        $this->assertFalse($this->pauser->resume('upgrade:test4'));
+        $this->assertTrue($this->pauser->resume('upgrade:test4'));
 
         // Resume non-existent queue
-        $this->assertFalse($this->pauser->resume('upgrade:idontexist'));
+        $this->assertTrue($this->pauser->resume('upgrade:idontexist'));
     }
 
     public function testIsPaused()
