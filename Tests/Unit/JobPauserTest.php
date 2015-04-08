@@ -24,13 +24,14 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
                 'sadd',
                 'srem',
                 'getPrefix',
+                'llen',
                 'rename',
                 'sismember',
             ))
             ->getMock();
     }
 
-    public function createDataProvider()
+    public function pauseDataProvider()
     {
         return array(
             array(true, true),
@@ -39,10 +40,10 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider createDataProvider
+     * @dataProvider pauseDataProvider
      * @param bool $saddSuccess
      */
-    public function testCreate($saddSuccess, $returnSuccess)
+    public function testPause($saddSuccess, $returnSuccess)
     {
         $this->redisMock
             ->expects($this->once())
@@ -54,22 +55,32 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($returnSuccess, $pauser->pause('upgrade:test'));
     }
 
-    public function removeDataProvider()
+    public function resumeDataProvider()
     {
         return array(
-            array(true, true),
-            array(false, false),
+            array(true, true, true),
+            array(true, false, false),
+            array(false, true, true),
+            array(false, false, true),
         );
     }
 
     /**
-     * @dataProvider removeDataProvider
+     * @dataProvider resumeDataProvider
+     * @param bool $isPaused
      * @param bool $sremSuccess
+     * @param bool $returnSuccess
      */
-    public function testRemove($sremSuccess, $returnSuccess)
+    public function testResume($isPaused, $sremSuccess, $returnSuccess)
     {
         $this->redisMock
             ->expects($this->once())
+            ->method('sismember')
+            ->with($this->equalTo('pauses'))
+            ->willReturn($isPaused);
+
+        $this->redisMock
+            ->expects($isPaused ? $this->once() : $this->never())
             ->method('srem')
             ->with($this->equalTo('pauses'), $this->equalTo('upgrade:test2'))
             ->willReturn($sremSuccess);
@@ -81,20 +92,29 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
     public function renameDataprovider()
     {
         return array(
-            array(true, true),
-            array(false, false),
+            array(1, true, true),
+            array(1, false, false),
+            array(0, true, true),
+            array(0, false, true),
         );
     }
 
     /**
      * @dataProvider renameDataProvider
+     * @param int $queueLength
      * @param bool $renameSuccess
      * @param bool $expectedResult
      */
-    public function testRenameToTemp($renameSuccess, $expectedResult)
+    public function testRenameToTemp($queueLength, $renameSuccess, $expectedResult)
     {
         $this->redisMock
             ->expects($this->once())
+            ->method('llen')
+            ->with($this->equalTo('queue:upgrade:test3'))
+            ->willReturn($queueLength);
+
+        $this->redisMock
+            ->expects($queueLength ? $this->once() : $this->never())
             ->method('rename')
             ->with($this->equalTo('queue:upgrade:test3'), $this->equalTo('resqueFaker:temp:upgrade:test3'))
             ->willReturn($renameSuccess);
@@ -105,13 +125,20 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider renameDataProvider Reuses the renaming provider because the cases are the same
+     * @param int $queueLength
      * @param bool $renameSuccess
      * @param bool $expectedResult
      */
-    public function testRenameBackFromTemp($renameSuccess, $expectedResult)
+    public function testRenameBackFromTemp($queueLength, $renameSuccess, $expectedResult)
     {
         $this->redisMock
             ->expects($this->once())
+            ->method('llen')
+            ->with($this->equalTo('temp:upgrade:test3'))
+            ->willReturn($queueLength);
+
+        $this->redisMock
+            ->expects($queueLength ? $this->once() : $this->never())
             ->method('rename')
             ->with($this->equalTo('temp:upgrade:test3'), $this->equalTo('resqueFaker:queue:upgrade:test3'))
             ->willReturn($renameSuccess);
@@ -120,7 +147,7 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($expectedResult, $pauser->renameBackFromTemp('upgrade:test3'));
     }
 
-    public function existsDataProvider()
+    public function isPausedDataProvider()
     {
         return array(
             array(true, true),
@@ -129,11 +156,11 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider existsDataProvider
+     * @dataProvider isPausedDataProvider
      * @param bool $existsSuccess
      * @param bool $expectedResult
      */
-    public function testExists($existsSuccess, $expectedResult)
+    public function testIsPaused($existsSuccess, $expectedResult)
     {
         $this->redisMock
             ->expects($this->once())
