@@ -62,7 +62,7 @@ class PauseTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(0, Resque::size('upgrade:test'));
 
         // Pause paused queue
-        $this->assertFalse($this->pauser->pause('upgrade:test'));
+        $this->assertTrue($this->pauser->pause('upgrade:test'));
 
         // Pause non-existent queue
         $this->assertTrue($this->pauser->pause('upgrade:test2'));

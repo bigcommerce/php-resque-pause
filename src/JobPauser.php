@@ -35,7 +35,7 @@ class JobPauser
      */
     public function pause($queue)
     {
-        return $this->redis->sadd(self::$pausedSetName, $queue);
+        return $this->isPaused($queue) || $this->redis->sadd(self::$pausedSetName, $queue);
     }
 
     /**
@@ -46,10 +46,7 @@ class JobPauser
      */
     public function resume($queue)
     {
-        if (!$this->isPaused($queue)) {
-            return true;
-        }
-        return $this->redis->srem(self::$pausedSetName, $queue);
+        return !$this->isPaused($queue) || $this->redis->srem(self::$pausedSetName, $queue);
     }
 
     /**
