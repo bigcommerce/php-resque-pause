@@ -3,6 +3,7 @@ namespace Resque\Plugins;
 
 use Resque;
 use Resque_Event;
+use Resque_Redis;
 use Resque_Job_DontCreate;
 
 /**
@@ -23,7 +24,7 @@ class Pause
     public function __construct()
     {
         // Create object for pausing jobs
-        $this->pauser = new JobPauser(Resque::redis(), \Resque_Redis::getPrefix());
+        $this->pauser = new JobPauser(Resque::redis(), Resque_Redis::getPrefix());
         $pauser = $this->pauser;
 
         // Listen for enqueue and move any new jobs to temp queue
