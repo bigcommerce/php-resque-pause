@@ -13,6 +13,7 @@
     <testsuites>
         <testsuite name="Resque Test Suite">
             <directory>./Tests/</directory>
+            <exclude>./Tests/Integration/PauseTestBase.php</exclude>
         </testsuite>
     </testsuites>
 

@@ -1,23 +1,20 @@
 <?php
-namespace Resque\Integration\Plugins\Tests;
+namespace Resque\Plugins\Tests\Integration;
 
 use Resque;
 use Resque\Plugins\Pause;
 use PHPUnit_Framework_TestCase;
 
 /**
- * Pause tests.
- *
- * @package     PHP Resque Pause
- * @author      Wedy Chainy <wedy.chainy@bigcommerce.com>
- * @license     http://www.opensource.org/licenses/mit-license.php
+ * Class PauseTestBase Provides all cases for testing the Pause class
+ * @package Resque\Plugins\Tests\Integration
  */
-class PauseTest extends PHPUnit_Framework_TestCase
+class PauseTestBase extends PHPUnit_Framework_TestCase
 {
     /** @var Pause */
     protected $pauser = null;
 
-    public static function setUpBeforeClass()
+    protected static function setupRedis()
     {
         $testMisc = realpath(__DIR__ . '/misc/');
         $redisConf = "$testMisc/redis.conf";
@@ -30,11 +27,17 @@ class PauseTest extends PHPUnit_Framework_TestCase
         }
 
         exec("cd $testMisc; redis-server $redisConf", $output, $returnVar);
-        usleep(500000);
+        usleep(500000); // Wait to for the server to start
         if ($returnVar != 0) {
             echo "Cannot start redis-server.\n";
             exit(1);
         }
+    }
+
+    protected static function getRedisPort()
+    {
+        $testMisc = realpath(__DIR__ . '/misc/');
+        $redisConf = "$testMisc/redis.conf";
 
         // Get redis port from conf
         $config = file_get_contents($redisConf);
@@ -42,8 +45,7 @@ class PauseTest extends PHPUnit_Framework_TestCase
             echo "Could not determine redis port from redis.conf";
             exit(1);
         }
-
-        Resque::setBackend('localhost:' . $matches[1]);
+        return $matches[1];
     }
 
     public function setUp()

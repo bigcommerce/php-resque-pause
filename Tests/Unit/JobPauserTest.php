@@ -1,24 +1,35 @@
 <?php
-namespace Unit\Resque\Plugins\Tests;
+namespace Resque\Plugins\Tests\Unit;
 
 use Resque\Plugins\JobPauser;
 use PHPUnit_Framework_TestCase;
 
 /**
- * Job tests.
- *
- * @package     Resque/Tests
- * @author      Wedy Chainy <wedy.chainy@bigcommerce.com>
- * @license     http://www.opensource.org/licenses/mit-license.php
+ * Class JobPauserTest
+ * @package Resque\Plugins\Tests\Unit
  */
 class JobPauserTest extends PHPUnit_Framework_TestCase
 {
     /** @var \PHPUnit_Framework_MockObject_MockObject */
-    protected $redisMock = null;
+    protected $resqueRedisMock = null;
+    /** @var \PHPUnit_Framework_MockObject_MockObject */
+    protected $predisMock = null;
 
     public function setUp()
     {
-        $this->redisMock = $this->getMockBuilder('Resque_Redis')
+        $this->resqueRedisMock = $this->getMockBuilder('Resque_Redis')
+            ->disableOriginalConstructor()
+            ->setMethods(array(
+                'sadd',
+                'srem',
+                'getPrefix',
+                'llen',
+                'rename',
+                'sismember',
+            ))
+            ->getMock();
+
+        $this->predisMock = $this->getMockBuilder('Predis\Client')
             ->disableOriginalConstructor()
             ->setMethods(array(
                 'sadd',
@@ -42,16 +53,17 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
     /**
      * @dataProvider pauseDataProvider
      * @param bool $saddSuccess
+     * @param bool $returnSuccess
      */
     public function testPause($saddSuccess, $returnSuccess)
     {
-        $this->redisMock
+        $this->resqueRedisMock
             ->expects($this->once())
             ->method('sadd')
             ->with($this->equalTo('pauses'), $this->equalTo('upgrade:test'))
             ->willReturn($saddSuccess);
 
-        $pauser = new JobPauser($this->redisMock, 'resqueFaker:');
+        $pauser = new JobPauser($this->resqueRedisMock, 'resqueFaker:');
         $this->assertEquals($returnSuccess, $pauser->pause('upgrade:test'));
     }
 
@@ -73,19 +85,19 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
      */
     public function testResume($isPaused, $sremSuccess, $returnSuccess)
     {
-        $this->redisMock
+        $this->resqueRedisMock
             ->expects($this->once())
             ->method('sismember')
             ->with($this->equalTo('pauses'))
             ->willReturn($isPaused);
 
-        $this->redisMock
+        $this->resqueRedisMock
             ->expects($isPaused ? $this->once() : $this->never())
             ->method('srem')
             ->with($this->equalTo('pauses'), $this->equalTo('upgrade:test2'))
             ->willReturn($sremSuccess);
 
-        $pauser = new JobPauser($this->redisMock, 'resqueFaker:');
+        $pauser = new JobPauser($this->resqueRedisMock, 'resqueFaker:');
         $this->assertEquals($returnSuccess, $pauser->resume('upgrade:test2'));
     }
 
@@ -107,19 +119,44 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
      */
     public function testRenameToTemp($queueLength, $renameSuccess, $expectedResult)
     {
-        $this->redisMock
+        $this->resqueRedisMock
             ->expects($this->once())
             ->method('llen')
             ->with($this->equalTo('queue:upgrade:test3'))
             ->willReturn($queueLength);
 
-        $this->redisMock
+        $this->resqueRedisMock
             ->expects($queueLength ? $this->once() : $this->never())
             ->method('rename')
             ->with($this->equalTo('queue:upgrade:test3'), $this->equalTo('resqueFaker:temp:upgrade:test3'))
             ->willReturn($renameSuccess);
 
-        $pauser = new JobPauser($this->redisMock, 'resqueFaker:');
+        $pauser = new JobPauser($this->resqueRedisMock, 'resqueFaker:');
+        $this->assertEquals($expectedResult, $pauser->renameToTemp('upgrade:test3'));
+    }
+
+
+    /**
+     * @dataProvider renameDataProvider
+     * @param int $queueLength
+     * @param bool $renameSuccess
+     * @param bool $expectedResult
+     */
+    public function testRenameToTempWithPredis($queueLength, $renameSuccess, $expectedResult)
+    {
+        $this->predisMock
+            ->expects($this->once())
+            ->method('llen')
+            ->with($this->equalTo('queue:upgrade:test3'))
+            ->willReturn($queueLength);
+
+        $this->predisMock
+            ->expects($queueLength ? $this->once() : $this->never())
+            ->method('rename')
+            ->with($this->equalTo('queue:upgrade:test3'), $this->equalTo('temp:upgrade:test3'))
+            ->willReturn($renameSuccess);
+
+        $pauser = new JobPauser($this->predisMock, 'resqueFaker:');
         $this->assertEquals($expectedResult, $pauser->renameToTemp('upgrade:test3'));
     }
 
@@ -131,19 +168,43 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
      */
     public function testRenameBackFromTemp($queueLength, $renameSuccess, $expectedResult)
     {
-        $this->redisMock
+        $this->resqueRedisMock
             ->expects($this->once())
             ->method('llen')
             ->with($this->equalTo('temp:upgrade:test3'))
             ->willReturn($queueLength);
 
-        $this->redisMock
+        $this->resqueRedisMock
             ->expects($queueLength ? $this->once() : $this->never())
             ->method('rename')
             ->with($this->equalTo('temp:upgrade:test3'), $this->equalTo('resqueFaker:queue:upgrade:test3'))
             ->willReturn($renameSuccess);
 
-        $pauser = new JobPauser($this->redisMock, 'resqueFaker:');
+        $pauser = new JobPauser($this->resqueRedisMock, 'resqueFaker:');
+        $this->assertEquals($expectedResult, $pauser->renameBackFromTemp('upgrade:test3'));
+    }
+
+    /**
+     * @dataProvider renameDataProvider Reuses the renaming provider because the cases are the same
+     * @param int $queueLength
+     * @param bool $renameSuccess
+     * @param bool $expectedResult
+     */
+    public function testRenameBackFromTempWithPredis($queueLength, $renameSuccess, $expectedResult)
+    {
+        $this->predisMock
+            ->expects($this->once())
+            ->method('llen')
+            ->with($this->equalTo('temp:upgrade:test3'))
+            ->willReturn($queueLength);
+
+        $this->predisMock
+            ->expects($queueLength ? $this->once() : $this->never())
+            ->method('rename')
+            ->with($this->equalTo('temp:upgrade:test3'), $this->equalTo('queue:upgrade:test3'))
+            ->willReturn($renameSuccess);
+
+        $pauser = new JobPauser($this->predisMock, 'resqueFaker:');
         $this->assertEquals($expectedResult, $pauser->renameBackFromTemp('upgrade:test3'));
     }
 
@@ -162,13 +223,13 @@ class JobPauserTest extends PHPUnit_Framework_TestCase
      */
     public function testIsPaused($existsSuccess, $expectedResult)
     {
-        $this->redisMock
+        $this->resqueRedisMock
             ->expects($this->once())
             ->method('sismember')
             ->with($this->equalTo('pauses'), $this->equalTo('upgrade:test8'))
             ->willReturn($existsSuccess);
 
-        $pauser = new JobPauser($this->redisMock, 'resqueFaker:');
+        $pauser = new JobPauser($this->resqueRedisMock, 'resqueFaker:');
         $this->assertEquals($expectedResult, $pauser->isPaused('upgrade:test8'));
     }
 }

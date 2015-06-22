@@ -1,16 +1,19 @@
 <?php
 namespace Resque\Plugins;
 
+use Resque_Redis;
+
 /**
- * Resque Pause job.
- *
- * @author      Wedy Chainy <wedy.chainy@bigcommerce.com>
- * @license     http://www.opensource.org/licenses/mit-license.php
+ * Class JobPauser Interacts with Redis for Resque\Plugins\Pause
+ * @package Resque\Plugins
  */
 class JobPauser
 {
     /** @var string default namespace for temporary pause */
     private static $tempQueuePrefix = 'temp:';
+
+    /** @var string Original queue's prefix */
+    private static $queuePrefix = 'queue:';
 
     /** @var string default set for pause */
     private static $pausedSetName = 'pauses';
@@ -24,7 +27,8 @@ class JobPauser
     public function __construct($redis, $resqueRedisPrefix)
     {
         $this->redis = $redis;
-        $this->resqueRedisPrefix = $resqueRedisPrefix;
+        // If we're using Resque_Redis we need to add the queue prefix unless it's the first argument
+        $this->resqueRedisPrefix = $redis instanceof Resque_Redis ? $resqueRedisPrefix : '';
     }
 
     /**
@@ -53,16 +57,15 @@ class JobPauser
      * Rename original queue to temp queue
      *
      * @param string $queue
-     * @param string $queuePrefix original queue's prefix , by default if you use PHP-resque it's 'queue'
      * @return bool
      */
-    public function renameToTemp($queue, $queuePrefix = 'queue:')
+    public function renameToTemp($queue)
     {
-        if ($this->queueIsEmpty($queuePrefix . $queue)) {
+        if ($this->queueIsEmpty(self::$queuePrefix . $queue)) {
             return true;
         }
         return $this->redis->rename(
-            $queuePrefix . $queue,
+            self::$queuePrefix . $queue,
             $this->resqueRedisPrefix . self::$tempQueuePrefix . $queue
         );
     }
@@ -71,17 +74,16 @@ class JobPauser
      * Rename back from temp to original
      *
      * @param string $queue
-     * @param string $queuePrefix original queue's prefix , by default if you use PHP-resque it's 'queue'
      * @return bool
      */
-    public function renameBackFromTemp($queue, $queuePrefix = 'queue:')
+    public function renameBackFromTemp($queue)
     {
         if ($this->queueIsEmpty(self::$tempQueuePrefix . $queue)) {
             return true;
         }
         return $this->redis->rename(
             self::$tempQueuePrefix . $queue,
-            $this->resqueRedisPrefix . $queuePrefix . $queue
+            $this->resqueRedisPrefix . self::$queuePrefix . $queue
         );
     }
 
