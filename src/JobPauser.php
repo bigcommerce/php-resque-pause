@@ -4,10 +4,8 @@ namespace Resque\Plugins;
 use Resque_Redis;
 
 /**
- * Resque Pause job.
- *
- * @author      Wedy Chainy <wedy.chainy@bigcommerce.com>
- * @license     http://www.opensource.org/licenses/mit-license.php
+ * Class JobPauser Interacts with Redis for Resque\Plugins\Pause
+ * @package Resque\Plugins
  */
 class JobPauser
 {

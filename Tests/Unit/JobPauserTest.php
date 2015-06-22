@@ -5,11 +5,8 @@ use Resque\Plugins\JobPauser;
 use PHPUnit_Framework_TestCase;
 
 /**
- * Job tests.
- *
- * @package     Resque/Tests
- * @author      Wedy Chainy <wedy.chainy@bigcommerce.com>
- * @license     http://www.opensource.org/licenses/mit-license.php
+ * Class JobPauserTest
+ * @package Resque\Plugins\Tests\Unit
  */
 class JobPauserTest extends PHPUnit_Framework_TestCase
 {

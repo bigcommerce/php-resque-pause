@@ -3,8 +3,8 @@
   "type": "library",
   "description": "php-resque-pause is a PHP port of resque-pause, which adds support for pausing / unpausing Resque jobs.",
   "authors": [{
-    "name": "Wedy Chainy",
-    "email": "wedy.chainy@bigcommerce.com"
+    "name": "The Bigcommerce tooling team",
+    "email": "tools@bigcommerce.com"
   }],
   "require": {
     "chrisboulton/php-resque": "dev-master"

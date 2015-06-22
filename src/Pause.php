@@ -7,11 +7,8 @@ use Resque_Redis;
 use Resque_Job_DontCreate;
 
 /**
- * Base Resque Pause class
- *
- * @package        PHP Resque Pause
- * @author         Wedy Chainy <wedy.chainy@bigcommerce.com>
- * @licence        http://www.opensource.org/licenses/mit-license.php
+ * Class Pause Pauses Resque queues
+ * @package Resque\Plugins
  */
 class Pause
 {
