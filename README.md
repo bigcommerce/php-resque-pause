@@ -1,4 +1,4 @@
-php-resque-pause: PHP Resque Pause [![Build Status](https://secure.travis-ci.org/bigcommerce/php-resque-pause.png?branch=master)](https://travis-ci.org/bigcommerce/php-resque-pause)
+PHP Resque Pause [![Build Status](https://travis-ci.org/bigcommerce/php-resque-pause.svg?branch=master)](https://travis-ci.org/bigcommerce/php-resque-pause)
 ==================================
 
 A [PHP-Resque](http://github.com/chrisboulton/php-resque) plugin.
