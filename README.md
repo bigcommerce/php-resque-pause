@@ -54,4 +54,4 @@ $GLOBALS['ResquePause']->isPaused('My_Queue');
 
 This repo is fairly thoroughly tested so please add tests for any feature you add. We use PSR-4 conventions and have a
 linter in place. To run the linter simply run `composer lint` and to run the tests locally run `composer test`. To have
-your code reviewed please tag @gabelimon and @wedy.
+your code reviewed please tag @bigcommerce-labs/tools.
